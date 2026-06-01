@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ Thống 7 Rotor Chạy Đơn Lẻ</title>
+    <title>Hệ Thống 7 Rotor Lưu Kết Quả</title>
     <style>
         * {
             box-sizing: border-box;
@@ -57,7 +57,7 @@
             transition: all 0.3s ease;
         }
 
-        /* Khung viền sáng lên khi rotor đó ĐANG CHẠY */
+        /* Khung viền sáng nhấp nháy nhẹ tại rotor đang trực tiếp chạy */
         .rotor-box.active-rotor {
             border-color: #00ffcc;
             background: #1a2925;
@@ -79,11 +79,14 @@
             transition: all 0.3s ease;
         }
 
+        /* Trạng thái chưa chạy */
         .status-cho {
             background-color: #444;
             color: #888;
+            box-shadow: none !important;
         }
 
+        /* Màu sắc khi hiện chữ Lớn / Nhỏ */
         .status-lon {
             background-color: #ff3366;
             color: #ffffff;
@@ -116,7 +119,7 @@
 </head>
 <body>
 
-    <h2>HỆ THỐNG 7 ROTOR ĐƠN LẺ</h2>
+    <h2>HỆ THỐNG ROTOR LƯU KẾT QUẢ</h2>
     <div class="countdown">Chuyển sang rotor tiếp theo sau: <span id="timer">30</span> giây</div>
 
     <div class="container">
@@ -132,7 +135,7 @@
     <button class="btn-trigger" onclick="runNextRotor()">Chuyển Kế Tiếp Ngay</button>
 
     <script>
-        // Cấu hình dữ liệu xoay vòng (5 bước) cho từng rotor
+        // Ma trận cấu hình chạy (5 bước) của bạn
         const rotorData = {
             1: ["Lớn", "Lớn", "Nhỏ", "Lớn", "Lớn"],
             2: ["Nhỏ", "Lớn", "Nhỏ", "Lớn", "Lớn"],
@@ -143,64 +146,69 @@
             7: ["Lớn", "Nhỏ", "Lớn", "Nhỏ", "Lớn"]
         };
 
-        // Mảng lưu trữ bước hiện tại của từng rotor (đều bắt đầu từ bước 0)
+        // Lưu trữ bước hiện tại của mỗi rotor (0 đến 4)
         let rotorSteps = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0 };
         
-        // Xác định xem rotor nào đang được chọn để chạy (Bắt đầu từ rotor 1)
+        // Định vị rotor nào đang trực tiếp chạy trong lượt này
         let activeRotor = 1; 
         
         let timeLeft = 30;
         const timerDisplay = document.getElementById('timer');
 
         function runNextRotor() {
-            // Duyệt qua toàn bộ 7 cái để cập nhật giao diện hiển thị
-            for (let i = 1; i <= 7; i++) {
-                const statusBox = document.getElementById(`status-${i}`);
-                const boxContainer = document.getElementById(`box-${i}`);
-
-                // Nếu i trùng với rotor đang hoạt động
-                if (i === activeRotor) {
-                    // Lấy giá trị của rotor đó tại bước hiện tại của nó
-                    const currentStep = rotorSteps[i];
-                    const textValue = rotorData[i][currentStep];
-                    
-                    statusBox.textContent = textValue;
-                    boxContainer.classList.add('active-rotor'); // Làm sáng khung viền lên
-
-                    if (textValue === "Lớn") {
-                        statusBox.className = "rotor-status status-lon";
-                    } else {
-                        statusBox.className = "rotor-status status-nho";
-                    }
-
-                    // Tăng bước của riêng rotor này lên 1 đơn vị để dành cho lần chạy sau (vòng lặp 0->4)
-                    rotorSteps[i] = (currentStep + 1) % 5;
-                } else {
-                    // Tất cả các rotor khác bắt buộc phải tắt và hiển thị Chờ...
+            // NẾU activeRotor quay lại bằng 1 (vừa hết lượt cái thứ 7), tiến hành reset các cái phía sau
+            if (activeRotor === 1) {
+                for (let k = 2; k <= 7; k++) {
+                    const statusBox = document.getElementById(`status-${k}`);
+                    const boxContainer = document.getElementById(`box-${k}`);
                     statusBox.textContent = "Chờ...";
                     statusBox.className = "rotor-status status-cho";
                     boxContainer.classList.remove('active-rotor');
                 }
             }
 
-            // Tìm xem mục tiêu tiếp theo là rotor mấy. Nếu vượt quá 7 thì tự động reset về 1
+            // Cập nhật trạng thái cho rotor đang hoạt động hiện tại
+            const currentStatusBox = document.getElementById(`status-${activeRotor}`);
+            const currentBoxContainer = document.getElementById(`box-${activeRotor}`);
+            
+            // Xóa hiệu ứng viền sáng (active) của các rotor khác, chỉ giữ lại cho cái đang chạy trực tiếp
+            for (let i = 1; i <= 7; i++) {
+                document.getElementById(`box-${i}`).classList.remove('active-rotor');
+            }
+            currentBoxContainer.classList.add('active-rotor');
+
+            // Lấy kết quả mới và hiển thị
+            const currentStep = rotorSteps[activeRotor];
+            const textValue = rotorData[activeRotor][currentStep];
+            currentStatusBox.textContent = textValue;
+
+            if (textValue === "Lớn") {
+                currentStatusBox.className = "rotor-status status-lon";
+            } else {
+                currentStatusBox.className = "rotor-status status-nho";
+            }
+
+            // Tăng bước của rotor này lên để chuẩn bị cho vòng lặp sau
+            rotorSteps[activeRotor] = (currentStep + 1) % 5;
+
+            // Tính toán mục tiêu cho giây thứ 30 kế tiếp
             activeRotor = activeRotor + 1;
             if (activeRotor > 7) {
-                activeRotor = 1;
+                activeRotor = 1; // Đạt đến 7 thì reset chỉ số mục tiêu về 1
             }
         }
 
-        // Kích hoạt chạy ngay khi vừa mở trang (chạy Rotor 1 trước)
+        // Kích hoạt chạy ngay khi vừa mở trang (chạy Rotor 1)
         runNextRotor();
 
-        // Bộ đếm ngược 30 giây tự động đổi qua rotor tiếp theo
+        // Bộ đếm ngược 30 giây tự động nhảy sang rotor kế tiếp
         setInterval(() => {
             timeLeft--;
             timerDisplay.textContent = timeLeft;
 
             if (timeLeft <= 0) {
                 runNextRotor();
-                timeLeft = 30; // Đặt lại 30 giây
+                timeLeft = 30; // Reset thời gian đếm ngược
             }
         }, 1000);
     </script>
