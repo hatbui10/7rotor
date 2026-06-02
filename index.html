@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ Thống 7 Rotor Lưu Kết Quả</title>
+    <title>Hệ Thống 7 Rotor - Đếm Vòng Lặp</title>
     <style>
         * {
             box-sizing: border-box;
@@ -30,11 +30,24 @@
             color: #00ffcc;
         }
 
-        .countdown {
-            font-size: 0.9rem;
+        .info-panel {
+            display: flex;
+            gap: 15px;
             margin-bottom: 20px;
+            font-size: 0.95rem;
             color: #aaa;
-            text-align: center;
+        }
+
+        .info-box {
+            background: #222;
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1px solid #444;
+        }
+
+        .highlight-text {
+            color: #00ffcc;
+            font-weight: bold;
         }
 
         .container {
@@ -57,7 +70,6 @@
             transition: all 0.3s ease;
         }
 
-        /* Khung viền sáng nhấp nháy nhẹ tại rotor đang trực tiếp chạy */
         .rotor-box.active-rotor {
             border-color: #00ffcc;
             background: #1a2925;
@@ -79,14 +91,12 @@
             transition: all 0.3s ease;
         }
 
-        /* Trạng thái chưa chạy */
         .status-cho {
             background-color: #444;
             color: #888;
             box-shadow: none !important;
         }
 
-        /* Màu sắc khi hiện chữ Lớn / Nhỏ */
         .status-lon {
             background-color: #ff3366;
             color: #ffffff;
@@ -119,8 +129,12 @@
 </head>
 <body>
 
-    <h2>HỆ THỐNG ROTOR LƯU KẾT QUẢ</h2>
-    <div class="countdown">Chuyển sang rotor tiếp theo sau: <span id="timer">30</span> giây</div>
+    <h2>HỆ THỐNG ROTOR LINH HOẠT</h2>
+    
+    <div class="info-panel">
+        <div class="info-box">Số vòng lặp: <span id="loop-count" class="highlight-text">1</span></div>
+        <div class="info-box">Đổi sau: <span id="timer" class="highlight-text">30</span>s</div>
+    </div>
 
     <div class="container">
         <div class="rotor-box" id="box-1"><div class="rotor-name">Rotor 1</div><div class="rotor-status" id="status-1">Chờ...</div></div>
@@ -135,29 +149,29 @@
     <button class="btn-trigger" onclick="runNextRotor()">Chuyển Kế Tiếp Ngay</button>
 
     <script>
-        // Ma trận cấu hình chạy (5 bước) của bạn
+        // Cấu hình số lượng phần tử tự chọn cho bất kỳ rotor nào
         const rotorData = {
-            1: ["Lớn", "Lớn", "Nhỏ", "Lớn", "Lớn"],
-            2: ["Nhỏ", "Lớn", "Nhỏ", "Lớn", "Lớn"],
-            3: ["Nhỏ", "Lớn", "Lớn", "Nhỏ", "Nhỏ"],
-            4: ["Lớn", "Nhỏ", "Lớn", "Lớn", "Nhỏ"],
-            5: ["Lớn", "Lớn", "Lớn", "Nhỏ", "Nhỏ"],
-            6: ["Nhỏ", "Lớn", "Nhỏ", "Nhỏ", "Lớn"],
-            7: ["Lớn", "Nhỏ", "Lớn", "Nhỏ", "Lớn"]
+            1: ["Nhỏ", "Lớn", "Nhỏ", "Nhỏ", "Lớn", "Nhỏ"],
+            2: ["Nhỏ", "Nhỏ", "Nhỏ", "Nhỏ", "Nhỏ", "Nhỏ"],
+            3: ["Nhỏ", "Nhỏ", "Lớn", "Nhỏ", "Lớn", "Lớn"],
+            4: ["Lớn", "Nhỏ", "Lớn", "Lớn", "Nhỏ", "Nhỏ"],
+            5: ["Nhỏ", "Lớn", "Nhỏ", "Lớn", "Nhỏ", "Nhỏ"],
+            6: ["Lớn", "Nhỏ", "Nhỏ", "Nhỏ", "Lớn", "Nhỏ"], 
+            7: ["Nhỏ", "Nhỏ", "Lớn", "Nhỏ", "Lớn", "Lớn"]
         };
 
-        // Lưu trữ bước hiện tại của mỗi rotor (0 đến 4)
         let rotorSteps = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0 };
-        
-        // Định vị rotor nào đang trực tiếp chạy trong lượt này
         let activeRotor = 1; 
+        let loopCounter = 1; // Bắt đầu đếm từ vòng số 1
         
         let timeLeft = 30;
         const timerDisplay = document.getElementById('timer');
+        const loopDisplay = document.getElementById('loop-count');
 
         function runNextRotor() {
-            // NẾU activeRotor quay lại bằng 1 (vừa hết lượt cái thứ 7), tiến hành reset các cái phía sau
+            // Khi quay về Rotor 1 (Tức là đã chạy xong một vòng từ 1-7)
             if (activeRotor === 1) {
+                // Xóa sạch các trạng thái hiển thị của các rotor phía sau (từ 2 đến 7)
                 for (let k = 2; k <= 7; k++) {
                     const statusBox = document.getElementById(`status-${k}`);
                     const boxContainer = document.getElementById(`box-${k}`);
@@ -167,17 +181,15 @@
                 }
             }
 
-            // Cập nhật trạng thái cho rotor đang hoạt động hiện tại
-            const currentStatusBox = document.getElementById(`status-${activeRotor}`);
-            const currentBoxContainer = document.getElementById(`box-${activeRotor}`);
-            
-            // Xóa hiệu ứng viền sáng (active) của các rotor khác, chỉ giữ lại cho cái đang chạy trực tiếp
+            // Xử lý hiệu ứng khung viền active
             for (let i = 1; i <= 7; i++) {
                 document.getElementById(`box-${i}`).classList.remove('active-rotor');
             }
+            const currentStatusBox = document.getElementById(`status-${activeRotor}`);
+            const currentBoxContainer = document.getElementById(`box-${activeRotor}`);
             currentBoxContainer.classList.add('active-rotor');
 
-            // Lấy kết quả mới và hiển thị
+            // Hiển thị giá trị Lớn / Nhỏ
             const currentStep = rotorSteps[activeRotor];
             const textValue = rotorData[activeRotor][currentStep];
             currentStatusBox.textContent = textValue;
@@ -188,29 +200,35 @@
                 currentStatusBox.className = "rotor-status status-nho";
             }
 
-            // Tăng bước của rotor này lên để chuẩn bị cho vòng lặp sau
-            rotorSteps[activeRotor] = (currentStep + 1) % 5;
+            // Tự động xoay bước dựa trên số phần tử thực tế của riêng rotor đó
+            const totalElements = rotorData[activeRotor].length;
+            rotorSteps[activeRotor] = (currentStep + 1) % totalElements;
 
-            // Tính toán mục tiêu cho giây thứ 30 kế tiếp
+            // Tính toán mục tiêu rotor tiếp theo
             activeRotor = activeRotor + 1;
             if (activeRotor > 7) {
-                activeRotor = 1; // Đạt đến 7 thì reset chỉ số mục tiêu về 1
+                activeRotor = 1;
+                
+                // ĐOẠN ĐƯỢC THÊM: Khi xác định lượt sau quay về 1, tăng số vòng lặp lên 1
+                loopCounter++;
+                loopDisplay.textContent = loopCounter;
             }
         }
 
-        // Kích hoạt chạy ngay khi vừa mở trang (chạy Rotor 1)
+        // Chạy lập tức lần đầu khi tải trang
         runNextRotor();
 
-        // Bộ đếm ngược 30 giây tự động nhảy sang rotor kế tiếp
+        // Bộ đếm thời gian tự động 30 giây
         setInterval(() => {
             timeLeft--;
             timerDisplay.textContent = timeLeft;
 
             if (timeLeft <= 0) {
                 runNextRotor();
-                timeLeft = 30; // Reset thời gian đếm ngược
+                timeLeft = 30;
             }
         }, 1000);
     </script>
 </body>
-</html>
+            </html>
+            
