@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ Thống 7 Rotor - Đếm Vòng Lặp</title>
+    <title>7 rotor</title>
     <style>
         * {
             box-sizing: border-box;
@@ -12,7 +12,7 @@
         }
 
         body {
-            background-color: #121212;
+            background-color: #0c0c0e;
             color: #ffffff;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
@@ -20,215 +20,260 @@
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            padding: 15px;
+            padding: 10px;
         }
 
         h2 {
-            margin-bottom: 5px;
-            font-size: 1.4rem;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
             text-align: center;
             color: #00ffcc;
+            text-shadow: 0 0 10px rgba(0, 255, 204, 0.3);
         }
 
+        /* Khung thông số trên cùng */
         .info-panel {
             display: flex;
-            gap: 15px;
+            gap: 8px;
             margin-bottom: 20px;
-            font-size: 0.95rem;
-            color: #aaa;
+            width: 100%;
+            max-width: 400px;
         }
 
         .info-box {
-            background: #222;
-            padding: 6px 12px;
-            border-radius: 6px;
-            border: 1px solid #444;
+            flex: 1;
+            background: #16161a;
+            padding: 8px;
+            border-radius: 10px;
+            border: 1px solid #2d2d35;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #8e8e93;
         }
 
         .highlight-text {
+            display: block;
+            font-size: 1.3rem;
             color: #00ffcc;
             font-weight: bold;
+            margin-top: 3px;
         }
 
-        .container {
+        /* Khung hiển thị kết quả bao quát màn hình */
+        .display-container {
             display: flex;
             flex-direction: column;
             gap: 12px;
             width: 100%;
-            max-width: 360px;
+            max-width: 400px;
         }
 
-        .rotor-box {
-            background: #1e1e1e;
-            border: 1px solid #333;
-            border-radius: 12px;
-            padding: 15px;
+        /* Định dạng chung cho các dải băng kết quả */
+        .result-strip {
             display: flex;
+            flex-direction: column;
+            justify-content: center;
             align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            padding: 12px;
+            border-radius: 14px;
             transition: all 0.3s ease;
-        }
-
-        .rotor-box.active-rotor {
-            border-color: #00ffcc;
-            background: #1a2925;
-        }
-
-        .rotor-name {
-            font-weight: bold;
-            font-size: 1.1rem;
-            color: #bbb;
-        }
-
-        .rotor-status {
-            font-size: 1.3rem;
-            font-weight: bold;
-            padding: 8px 20px;
-            border-radius: 8px;
-            min-width: 100px;
             text-align: center;
-            transition: all 0.3s ease;
         }
 
-        .status-cho {
-            background-color: #444;
-            color: #888;
-            box-shadow: none !important;
+        .strip-label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+            opacity: 0.8;
         }
 
-        .status-lon {
-            background-color: #ff3366;
-            color: #ffffff;
-            box-shadow: 0 0 10px rgba(255, 51, 102, 0.5);
+        .strip-value {
+            font-size: 1.8rem;
+            font-weight: 900;
         }
 
-        .status-nho {
-            background-color: #33ccff;
-            color: #121212;
-            box-shadow: 0 0 10px rgba(51, 204, 255, 0.5);
-        }
+        /* --- Màu sắc thực tế cho từng dải băng kết quả --- */
+        
+        /* 1. KẾT QUẢ TRƯỚC ĐÓ: Nền xám tối giản */
+        .strip-prev { background-color: #24242b; color: #a1a1aa; border: 1px solid #3f3f46; }
+        .strip-prev .strip-value { font-size: 1.5rem; }
 
-        .btn-trigger {
+        /* 2. KẾT QUẢ HIỆN TẠI: Phóng to tối đa, tràn màu nền rực rỡ */
+        .strip-curr {
+            padding: 22px 12px;
+            border: 2px solid #ffffff33;
+        }
+        .strip-curr .strip-value { font-size: 3rem; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+        
+        .curr-bg-lon { background-color: #ff2a5f !important; color: #ffffff !important; box-shadow: 0 0 20px rgba(255, 42, 95, 0.5); }
+        .curr-bg-nho { background-color: red !important; color: yellow !important; box-shadow: 0 0 20px rgba(0, 191, 255, 0.5); }
+        .curr-bg-cho { background-color: #1c1c24; color: #555; }
+
+        /* 3. KẾT QUẢ TIẾP THEO: Nền tím đậm đầm mắt */
+        .strip-next { background-color: #4c1d95; color: #e9d5ff; border: 1px solid #6d28d9; }
+        .strip-next .strip-value { font-size: 1.5rem; }
+        
+        .strip-cho-all { background-color: #1c1c24; color: #555; border: 1px solid #2d2d35; }
+
+        /* Nút điều khiển to bự dễ bấm */
+        .btn-control {
             margin-top: 25px;
-            padding: 14px 28px;
+            padding: 16px;
             background: #00ffcc;
             color: #000;
             border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 1rem;
+            border-radius: 14px;
+            font-weight: 900;
+            font-size: 1.2rem;
             cursor: pointer;
             width: 100%;
-            max-width: 360px;
+            max-width: 400px;
+            box-shadow: 0 5px 15px rgba(0, 255, 204, 0.3);
+            letter-spacing: 1px;
+            transition: all 0.2s;
         }
-        .btn-trigger:active {
-            background: #00b38f;
+        .btn-control.playing {
+            background: #ff9f0a;
+            box-shadow: 0 5px 15px rgba(255, 159, 10, 0.3);
+        }
+        .btn-control:active {
+            transform: scale(0.97);
         }
     </style>
 </head>
 <body>
 
-    <h2>ROTOR 7</h2>
+    <h2>ROTOR 42</h2>
     
     <div class="info-panel">
-        <div class="info-box">Số vòng lặp: <span id="loop-count" class="highlight-text">1</span></div>
-        <div class="info-box">Đổi sau: <span id="timer" class="highlight-text">30</span>s</div>
+        <div class="info-box">Vòng lặp lớn <span id="loop-count" class="highlight-text">0</span></div>
+        <div class="info-box">Vị trí hiện tại <span id="step-count" class="highlight-text">0/42</span></div>
+        <div class="info-box">Đổi sau <span id="timer" class="highlight-text">30</span>s</div>
     </div>
 
-    <div class="container">
-        <div class="rotor-box" id="box-1"><div class="rotor-name">Rotor 1</div><div class="rotor-status" id="status-1">Chờ...</div></div>
-        <div class="rotor-box" id="box-2"><div class="rotor-name">Rotor 2</div><div class="rotor-status" id="status-2">Chờ...</div></div>
-        <div class="rotor-box" id="box-3"><div class="rotor-name">Rotor 3</div><div class="rotor-status" id="status-3">Chờ...</div></div>
-        <div class="rotor-box" id="box-4"><div class="rotor-name">Rotor 4</div><div class="rotor-status" id="status-4">Chờ...</div></div>
-        <div class="rotor-box" id="box-5"><div class="rotor-name">Rotor 5</div><div class="rotor-status" id="status-5">Chờ...</div></div>
-        <div class="rotor-box" id="box-6"><div class="rotor-name">Rotor 6</div><div class="rotor-status" id="status-6">Chờ...</div></div>
-        <div class="rotor-box" id="box-7"><div class="rotor-name">Rotor 7</div><div class="rotor-status" id="status-7">Chờ...</div></div>
+    <div class="display-container">
+        <div id="block-prev" class="result-strip strip-cho-all">
+            <div class="strip-label">Kết quả trước đó</div>
+            <div id="text-prev" class="strip-value">Chờ...</div>
+        </div>
+
+        <div id="block-curr" class="result-strip strip-curr curr-bg-cho">
+            <div class="strip-label" style="font-weight: bold; letter-spacing: 2px;">KẾT QUẢ HIỆN TẠI</div>
+            <div id="text-curr" class="strip-value">CHỜ...</div>
+        </div>
+
+        <div id="block-next" class="result-strip strip-cho-all">
+            <div class="strip-label">Kết quả tiếp theo</div>
+            <div id="text-next" class="strip-value">Chờ...</div>
+        </div>
     </div>
 
-    <button class="btn-trigger" onclick="runNextRotor()">Chuyển Kế Tiếp Ngay</button>
+    <button id="btn-play" class="btn-control" onclick="toggleSystem()">BẮT ĐẦU CHẠY CHUỖI</button>
 
     <script>
-        // Cấu hình số lượng phần tử tự chọn cho bất kỳ rotor nào
-        const rotorData = {
-            1: ["Nhỏ", "Lớn", "Nhỏ", "Nhỏ", "Lớn", "Nhỏ"],
-            2: ["Nhỏ", "Nhỏ", "Nhỏ", "Nhỏ", "Nhỏ", "Nhỏ"],
-            3: ["Nhỏ", "Nhỏ", "Lớn", "Nhỏ", "Lớn", "Lớn"],
-            4: ["Lớn", "Nhỏ", "Lớn", "Lớn", "Nhỏ", "Nhỏ"],
-            5: ["Nhỏ", "Lớn", "Nhỏ", "Lớn", "Nhỏ", "Nhỏ"],
-            6: ["Lớn", "Nhỏ", "Nhỏ", "Nhỏ", "Lớn", "Nhỏ"], 
-            7: ["Nhỏ", "Nhỏ", "Lớn", "Nhỏ", "Lớn", "Lớn"]
-        };
+        const sequenceData = [
+            "Nhỏ", "Nhỏ", "Nhỏ", "Lớn", "Nhỏ", "Lớn", "Nhỏ",
+            "Lớn", "Nhỏ", "Nhỏ", "Nhỏ", "Lớn", "Nhỏ", "Nhỏ",
+            "Nhỏ", "Nhỏ", "Lớn", "Lớn", "Nhỏ", "Nhỏ", "Lớn",
+            "Nhỏ", "Nhỏ", "Nhỏ", "Lớn", "Lớn", "Nhỏ", "Nhỏ",
+            "Lớn", "Nhỏ", "Lớn", "Nhỏ", "Nhỏ", "Lớn", "Lớn",
+            "Nhỏ", "Nhỏ", "Lớn", "Nhỏ", "Nhỏ", "Nhỏ", "Lớn"
+        ];
 
-        let rotorSteps = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0 };
-        let activeRotor = 1; 
-        let loopCounter = 1; // Bắt đầu đếm từ vòng số 1
+        let currentIndex = 0;   
+        let loopCounter = 1;    
+        let timeLeft = 30;      
+        let isPlaying = false;  
+        let intervalId = null;
+
+        const blockPrev = document.getElementById('block-prev');
+        const blockCurr = document.getElementById('block-curr');
+        const blockNext = document.getElementById('block-next');
         
-        let timeLeft = 30;
+        const textPrev = document.getElementById('text-prev');
+        const textCurr = document.getElementById('text-curr');
+        const textNext = document.getElementById('text-next');
+
         const timerDisplay = document.getElementById('timer');
         const loopDisplay = document.getElementById('loop-count');
+        const stepDisplay = document.getElementById('step-count');
+        const btnPlay = document.getElementById('btn-play');
 
-        function runNextRotor() {
-            // Khi quay về Rotor 1 (Tức là đã chạy xong một vòng từ 1-7)
-            if (activeRotor === 1) {
-                // Xóa sạch các trạng thái hiển thị của các rotor phía sau (từ 2 đến 7)
-                for (let k = 2; k <= 7; k++) {
-                    const statusBox = document.getElementById(`status-${k}`);
-                    const boxContainer = document.getElementById(`box-${k}`);
-                    statusBox.textContent = "Chờ...";
-                    statusBox.className = "rotor-status status-cho";
-                    boxContainer.classList.remove('active-rotor');
-                }
-            }
-
-            // Xử lý hiệu ứng khung viền active
-            for (let i = 1; i <= 7; i++) {
-                document.getElementById(`box-${i}`).classList.remove('active-rotor');
-            }
-            const currentStatusBox = document.getElementById(`status-${activeRotor}`);
-            const currentBoxContainer = document.getElementById(`box-${activeRotor}`);
-            currentBoxContainer.classList.add('active-rotor');
-
-            // Hiển thị giá trị Lớn / Nhỏ
-            const currentStep = rotorSteps[activeRotor];
-            const textValue = rotorData[activeRotor][currentStep];
-            currentStatusBox.textContent = textValue;
-
-            if (textValue === "Lớn") {
-                currentStatusBox.className = "rotor-status status-lon";
+        function updateDisplay() {
+            // 1. Xử lý ô HIỆN TẠI (Tràn màu nền cực mạnh)
+            const currentVal = sequenceData[currentIndex];
+            textCurr.textContent = currentVal;
+            if (currentVal === "Lớn") {
+                blockCurr.className = "result-strip strip-curr curr-bg-lon";
             } else {
-                currentStatusBox.className = "rotor-status status-nho";
+                blockCurr.className = "result-strip strip-curr curr-bg-nho";
             }
 
-            // Tự động xoay bước dựa trên số phần tử thực tế của riêng rotor đó
-            const totalElements = rotorData[activeRotor].length;
-            rotorSteps[activeRotor] = (currentStep + 1) % totalElements;
-
-            // Tính toán mục tiêu rotor tiếp theo
-            activeRotor = activeRotor + 1;
-            if (activeRotor > 7) {
-                activeRotor = 1;
-                
-                // ĐOẠN ĐƯỢC THÊM: Khi xác định lượt sau quay về 1, tăng số vòng lặp lên 1
-                loopCounter++;
-                loopDisplay.textContent = loopCounter;
+            // 2. Xử lý ô TRƯỚC ĐÓ (Nền xám cố định)
+            let prevVal = null;
+            if (currentIndex > 0) {
+                prevVal = sequenceData[currentIndex - 1];
+            } else if (currentIndex === 0 && loopCounter > 1) {
+                prevVal = sequenceData[sequenceData.length - 1]; 
             }
+            
+            if (prevVal) {
+                textPrev.textContent = prevVal;
+                blockPrev.className = "result-strip strip-prev";
+            } else {
+                textPrev.textContent = "Chờ...";
+                blockPrev.className = "result-strip strip-cho-all";
+            }
+
+            // 3. Xử lý ô TIẾP THEO (Nền tím cố định)
+            let nextVal = null;
+            if (currentIndex < sequenceData.length - 1) {
+                nextVal = sequenceData[currentIndex + 1];
+            } else if (currentIndex === sequenceData.length - 1) {
+                nextVal = sequenceData[0]; 
+            }
+            
+            textNext.textContent = nextVal;
+            blockNext.className = "result-strip strip-next";
+
+            // 4. Đồng bộ thông số
+            loopDisplay.textContent = loopCounter;
+            stepDisplay.textContent = `${currentIndex + 1}/${sequenceData.length}`;
         }
 
-        // Chạy lập tức lần đầu khi tải trang
-        runNextRotor();
-
-        // Bộ đếm thời gian tự động 30 giây
-        setInterval(() => {
-            timeLeft--;
-            timerDisplay.textContent = timeLeft;
-
-            if (timeLeft <= 0) {
-                runNextRotor();
-                timeLeft = 30;
+        function nextStep() {
+            currentIndex++;
+            if (currentIndex >= sequenceData.length) {
+                currentIndex = 0;
+                loopCounter++;
             }
-        }, 1000);
+            updateDisplay();
+        }
+
+        function toggleSystem() {
+            if (!isPlaying) {
+                isPlaying = true;
+                btnPlay.textContent = "TẠM DỪNG CHUỖI";
+                btnPlay.classList.add('playing');
+                updateDisplay();
+
+                intervalId = setInterval(() => {
+                    timeLeft--;
+                    timerDisplay.textContent = timeLeft;
+
+                    if (timeLeft <= 0) {
+                        nextStep();
+                        timeLeft = 30; 
+                    }
+                }, 1000);
+            } else {
+                isPlaying = false;
+                btnPlay.textContent = "TIẾP TỤC CHUỖI";
+                btnPlay.classList.remove('playing');
+                clearInterval(intervalId);
+            }
+        }
     </script>
 </body>
-            </html>
-            
+</html>
