@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sơ đồ cây gọn gàng</title>
+    <title>Sơ đồ cây lưu trữ tự động</title>
+    <!-- Thư viện chụp ảnh html2canvas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -25,6 +27,7 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             display: flex;
             gap: 10px;
+            flex-wrap: wrap;
         }
 
         #controls button {
@@ -59,6 +62,7 @@
             padding: 50px;
             display: inline-block;
             will-change: transform;
+            background-color: #f4f6f9;
         }
 
         #svg-canvas {
@@ -92,7 +96,6 @@
             align-items: center;
         }
 
-        /* Vùng bọc node và các nút chức năng bên cạnh */
         .node-wrapper {
             position: relative;
             display: inline-block;
@@ -124,7 +127,6 @@
             border: 1px dashed #2980b9;
         }
 
-        /* Nhóm nút thao tác nằm ẩn bên phải, hiện ra khi hover hoặc chạm */
         .node-actions {
             position: absolute;
             left: calc(100% + 8px);
@@ -139,7 +141,6 @@
             z-index: 10;
         }
 
-        /* Khi hover vào node hoặc đang active/hiện menu */
         .node-wrapper:hover .node-actions,
         .node-wrapper.active .node-actions {
             opacity: 1;
@@ -182,6 +183,8 @@
         <button onclick="zoomOut()">➖</button>
         <button onclick="resetZoom()">🔄</button>
         <button onclick="addRootNode()" style="background-color: #27ae60;">Thêm Gốc</button>
+        <button onclick="downloadTreeImage()" style="background-color: #8e44ad;">📥 Tải ảnh</button>
+        <button onclick="resetData()" style="background-color: #c0392b;">🧹 Xóa dữ liệu cũ</button>
     </div>
 
     <div id="viewport">
@@ -194,6 +197,7 @@
                 </defs>
             </svg>
 
+            <!-- Cây hiển thị sẽ được tải từ LocalStorage hoặc dữ liệu mẫu mặc định -->
             <div class="tree" id="main-tree">
                 <ul>
                     <li>
@@ -207,20 +211,6 @@
                                 <button onclick="deleteNode(this)">🗑 Xóa</button>
                             </div>
                         </div>
-                        <ul>
-                            <li>
-                                <div class="node-wrapper">
-                                    <div class="node-box">
-                                        <span class="node-title" contenteditable="true">Nhánh con 1</span>
-                                    </div>
-                                    <div class="node-actions">
-                                        <button class="toggle-btn" onclick="toggleNode(this)">Ẩn</button>
-                                        <button class="add-btn" onclick="addChildNode(this)">➕ Thêm</button>
-                                        <button onclick="deleteNode(this)">🗑 Xóa</button>
-                                    </div>
-                                </div>
-                            </li>
-                        </ul>
                     </li>
                 </ul>
             </div>
@@ -234,9 +224,30 @@
         const viewport = document.getElementById('viewport');
         const container = document.getElementById('tree-container');
         const svgCanvas = document.getElementById('svg-canvas');
+        const mainTree = document.getElementById('main-tree');
 
         function setTransform() {
             container.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
+        }
+
+        // --- HÀM LƯU VÀ TẢI TỪ LOCALSTORAGE ---
+        function saveTreeData() {
+            const htmlContent = mainTree.innerHTML;
+            localStorage.setItem('saved_tree_html', htmlContent);
+        }
+
+        function loadTreeData() {
+            const savedHtml = localStorage.getItem('saved_tree_html');
+            if (savedHtml) {
+                mainTree.innerHTML = savedHtml;
+            }
+        }
+
+        function resetData() {
+            if (confirm("Bạn có chắc chắn muốn xóa toàn bộ sơ đồ đã lưu để làm lại từ đầu không?")) {
+                localStorage.removeItem('saved_tree_html');
+                location.reload();
+            }
         }
 
         function drawLines() {
@@ -289,7 +300,13 @@
             if (rootLi) traverse(rootLi);
         }
 
-        // Hỗ trợ chạm trên điện thoại để bật/tắt menu nút bấm bên cạnh
+        // Tự động lưu lại mỗi khi người dùng sửa chữ trực tiếp trên node
+        document.addEventListener('input', function(e) {
+            if (e.target.classList.contains('node-title')) {
+                saveTreeData();
+            }
+        });
+
         document.addEventListener('click', function(e) {
             const wrapper = e.target.closest('.node-wrapper');
             document.querySelectorAll('.node-wrapper').forEach(w => {
@@ -364,12 +381,14 @@
             li.classList.toggle('collapsed');
             btn.innerText = li.classList.contains('collapsed') ? 'Hiện' : 'Ẩn';
             setTimeout(drawLines, 30);
+            saveTreeData();
         }
 
         function deleteNode(btn) {
             const li = btn.closest('li');
             li.remove();
             setTimeout(drawLines, 30);
+            saveTreeData();
         }
 
         function addChildNode(btn) {
@@ -400,6 +419,7 @@
             `;
             ulChild.appendChild(newLi);
             setTimeout(drawLines, 30);
+            saveTreeData();
         }
 
         function addRootNode() {
@@ -423,9 +443,34 @@
             `;
             mainUl.appendChild(newLi);
             setTimeout(drawLines, 30);
+            saveTreeData();
         }
 
-        window.onload = () => drawLines();
+        function downloadTreeImage() {
+            const oldTransform = container.style.transform;
+            container.style.transform = 'translate(0px, 0px) scale(1)';
+            document.querySelectorAll('.node-wrapper').forEach(w => w.classList.remove('active'));
+
+            setTimeout(() => {
+                html2canvas(container, {
+                    backgroundColor: '#f4f6f9',
+                    scale: 2,
+                    useCORS: true
+                }).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = 'so-do-cay.png';
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                    container.style.transform = oldTransform;
+                });
+            }, 100);
+        }
+
+        // Tải dữ liệu đã lưu khi khởi động trang
+        window.onload = () => {
+            loadTreeData();
+            drawLines();
+        };
         window.onresize = () => setTimeout(drawLines, 100);
     </script>
 </body>
