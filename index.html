@@ -2,278 +2,432 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>7 rotor</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sơ đồ cây gọn gàng</title>
     <style>
-        * {
-            box-sizing: border-box;
+        body {
+            font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
+            background-color: #f4f6f9;
+            overflow: hidden;
+            touch-action: none;
         }
 
-        body {
-            background-color: #0c0c0e;
-            color: #ffffff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        #controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: #fff;
+            padding: 10px 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            padding: 10px;
+            gap: 10px;
         }
 
-        h2 {
-            margin-bottom: 15px;
-            font-size: 1.5rem;
-            text-align: center;
-            color: #00ffcc;
-            text-shadow: 0 0 10px rgba(0, 255, 204, 0.3);
-        }
-
-        /* Khung thông số trên cùng */
-        .info-panel {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 20px;
-            width: 100%;
-            max-width: 400px;
-        }
-
-        .info-box {
-            flex: 1;
-            background: #16161a;
-            padding: 8px;
-            border-radius: 10px;
-            border: 1px solid #2d2d35;
-            text-align: center;
-            font-size: 0.8rem;
-            color: #8e8e93;
-        }
-
-        .highlight-text {
-            display: block;
-            font-size: 1.3rem;
-            color: #00ffcc;
-            font-weight: bold;
-            margin-top: 3px;
-        }
-
-        /* Khung hiển thị kết quả bao quát màn hình */
-        .display-container {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            width: 100%;
-            max-width: 400px;
-        }
-
-        /* Định dạng chung cho các dải băng kết quả */
-        .result-strip {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 12px;
-            border-radius: 14px;
-            transition: all 0.3s ease;
-            text-align: center;
-        }
-
-        .strip-label {
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 4px;
-            opacity: 0.8;
-        }
-
-        .strip-value {
-            font-size: 1.8rem;
-            font-weight: 900;
-        }
-
-        /* --- Màu sắc thực tế cho từng dải băng kết quả --- */
-        
-        /* 1. KẾT QUẢ TRƯỚC ĐÓ: Nền xám tối giản */
-        .strip-prev { background-color: #24242b; color: #a1a1aa; border: 1px solid #3f3f46; }
-        .strip-prev .strip-value { font-size: 1.5rem; }
-
-        /* 2. KẾT QUẢ HIỆN TẠI: Phóng to tối đa, tràn màu nền rực rỡ */
-        .strip-curr {
-            padding: 22px 12px;
-            border: 2px solid #ffffff33;
-        }
-        .strip-curr .strip-value { font-size: 3rem; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
-        
-        .curr-bg-lon { background-color: #ff2a5f !important; color: #ffffff !important; box-shadow: 0 0 20px rgba(255, 42, 95, 0.5); }
-        .curr-bg-nho { background-color: red !important; color: yellow !important; box-shadow: 0 0 20px rgba(0, 191, 255, 0.5); }
-        .curr-bg-cho { background-color: #1c1c24; color: #555; }
-
-        /* 3. KẾT QUẢ TIẾP THEO: Nền tím đậm đầm mắt */
-        .strip-next { background-color: #4c1d95; color: #e9d5ff; border: 1px solid #6d28d9; }
-        .strip-next .strip-value { font-size: 1.5rem; }
-        
-        .strip-cho-all { background-color: #1c1c24; color: #555; border: 1px solid #2d2d35; }
-
-        /* Nút điều khiển to bự dễ bấm */
-        .btn-control {
-            margin-top: 25px;
-            padding: 16px;
-            background: #00ffcc;
-            color: #000;
+        #controls button {
+            padding: 8px 12px;
+            background-color: #2980b9;
+            color: white;
             border: none;
-            border-radius: 14px;
-            font-weight: 900;
-            font-size: 1.2rem;
+            border-radius: 4px;
             cursor: pointer;
-            width: 100%;
-            max-width: 400px;
-            box-shadow: 0 5px 15px rgba(0, 255, 204, 0.3);
-            letter-spacing: 1px;
-            transition: all 0.2s;
+            font-size: 14px;
+            transition: background 0.3s;
         }
-        .btn-control.playing {
-            background: #ff9f0a;
-            box-shadow: 0 5px 15px rgba(255, 159, 10, 0.3);
+
+        #controls button:hover {
+            background-color: #1f618d;
         }
-        .btn-control:active {
-            transform: scale(0.97);
+
+        #viewport {
+            width: 100vw;
+            height: 100vh;
+            cursor: grab;
+            position: relative;
+        }
+
+        #viewport:active {
+            cursor: grabbing;
+        }
+
+        #tree-container {
+            position: absolute;
+            transform-origin: 0 0;
+            padding: 50px;
+            display: inline-block;
+            will-change: transform;
+        }
+
+        #svg-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 10000px;
+            height: 10000px;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .tree ul {
+            padding-top: 40px; 
+            position: relative;
+            display: flex;
+            justify-content: center;
+            list-style-type: none;
+            margin: 0;
+            padding-left: 0;
+            z-index: 2;
+        }
+
+        .tree li {
+            text-align: center;
+            list-style-type: none;
+            position: relative;
+            padding: 40px 15px 0 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Vùng bọc node và các nút chức năng bên cạnh */
+        .node-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .node-box {
+            border: 2px solid #2980b9;
+            padding: 12px 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            min-width: 130px;
+            z-index: 3;
+            position: relative;
+        }
+
+        .node-title {
+            font-weight: bold;
+            color: #333;
+            font-size: 14px;
+            outline: none;
+            padding: 2px 4px;
+            border-radius: 3px;
+            display: inline-block;
+        }
+
+        .node-title:focus {
+            background-color: #eef2f7;
+            border: 1px dashed #2980b9;
+        }
+
+        /* Nhóm nút thao tác nằm ẩn bên phải, hiện ra khi hover hoặc chạm */
+        .node-actions {
+            position: absolute;
+            left: calc(100% + 8px);
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+            z-index: 10;
+        }
+
+        /* Khi hover vào node hoặc đang active/hiện menu */
+        .node-wrapper:hover .node-actions,
+        .node-wrapper.active .node-actions {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .node-actions button {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 11px;
+            cursor: pointer;
+            white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+        }
+
+        .node-actions button.add-btn {
+            background: #27ae60;
+        }
+
+        .node-actions button.toggle-btn {
+            background: #f39c12;
+        }
+
+        .node-actions button:hover {
+            opacity: 0.85;
+        }
+
+        .collapsed > ul {
+            display: none !important;
         }
     </style>
 </head>
 <body>
 
-    <h2>ROTOR 42</h2>
-    
-    <div class="info-panel">
-        <div class="info-box">Vòng lặp lớn <span id="loop-count" class="highlight-text">0</span></div>
-        <div class="info-box">Vị trí hiện tại <span id="step-count" class="highlight-text">0/42</span></div>
-        <div class="info-box">Đổi sau <span id="timer" class="highlight-text">30</span>s</div>
+    <div id="controls">
+        <button onclick="zoomIn()">➕</button>
+        <button onclick="zoomOut()">➖</button>
+        <button onclick="resetZoom()">🔄</button>
+        <button onclick="addRootNode()" style="background-color: #27ae60;">Thêm Gốc</button>
     </div>
 
-    <div class="display-container">
-        <div id="block-prev" class="result-strip strip-cho-all">
-            <div class="strip-label">Kết quả trước đó</div>
-            <div id="text-prev" class="strip-value">Chờ...</div>
-        </div>
+    <div id="viewport">
+        <div id="tree-container">
+            <svg id="svg-canvas">
+                <defs>
+                    <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                        <path d="M 0 2 L 10 5 L 0 8 z" fill="#2980b9"/>
+                    </marker>
+                </defs>
+            </svg>
 
-        <div id="block-curr" class="result-strip strip-curr curr-bg-cho">
-            <div class="strip-label" style="font-weight: bold; letter-spacing: 2px;">KẾT QUẢ HIỆN TẠI</div>
-            <div id="text-curr" class="strip-value">CHỜ...</div>
-        </div>
-
-        <div id="block-next" class="result-strip strip-cho-all">
-            <div class="strip-label">Kết quả tiếp theo</div>
-            <div id="text-next" class="strip-value">Chờ...</div>
+            <div class="tree" id="main-tree">
+                <ul>
+                    <li>
+                        <div class="node-wrapper">
+                            <div class="node-box">
+                                <span class="node-title" contenteditable="true">Gốc chính</span>
+                            </div>
+                            <div class="node-actions">
+                                <button class="toggle-btn" onclick="toggleNode(this)">Ẩn</button>
+                                <button class="add-btn" onclick="addChildNode(this)">➕ Thêm</button>
+                                <button onclick="deleteNode(this)">🗑 Xóa</button>
+                            </div>
+                        </div>
+                        <ul>
+                            <li>
+                                <div class="node-wrapper">
+                                    <div class="node-box">
+                                        <span class="node-title" contenteditable="true">Nhánh con 1</span>
+                                    </div>
+                                    <div class="node-actions">
+                                        <button class="toggle-btn" onclick="toggleNode(this)">Ẩn</button>
+                                        <button class="add-btn" onclick="addChildNode(this)">➕ Thêm</button>
+                                        <button onclick="deleteNode(this)">🗑 Xóa</button>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
         </div>
     </div>
-
-    <button id="btn-play" class="btn-control" onclick="toggleSystem()">BẮT ĐẦU CHẠY CHUỖI</button>
 
     <script>
-        const sequenceData = [
-            "Nhỏ", "Nhỏ", "Nhỏ", "Lớn", "Nhỏ", "Lớn", "Nhỏ",
-            "Lớn", "Nhỏ", "Nhỏ", "Nhỏ", "Lớn", "Nhỏ", "Nhỏ",
-            "Nhỏ", "Nhỏ", "Lớn", "Lớn", "Nhỏ", "Nhỏ", "Lớn",
-            "Nhỏ", "Nhỏ", "Nhỏ", "Lớn", "Lớn", "Nhỏ", "Nhỏ",
-            "Lớn", "Nhỏ", "Lớn", "Nhỏ", "Nhỏ", "Lớn", "Lớn",
-            "Nhỏ", "Nhỏ", "Lớn", "Nhỏ", "Nhỏ", "Nhỏ", "Lớn"
-        ];
+        let scale = 1, pointX = 0, pointY = 0;
+        let isDragging = false, startX = 0, startY = 0, initialDistance = null;
 
-        let currentIndex = 0;   
-        let loopCounter = 1;    
-        let timeLeft = 30;      
-        let isPlaying = false;  
-        let intervalId = null;
+        const viewport = document.getElementById('viewport');
+        const container = document.getElementById('tree-container');
+        const svgCanvas = document.getElementById('svg-canvas');
 
-        const blockPrev = document.getElementById('block-prev');
-        const blockCurr = document.getElementById('block-curr');
-        const blockNext = document.getElementById('block-next');
-        
-        const textPrev = document.getElementById('text-prev');
-        const textCurr = document.getElementById('text-curr');
-        const textNext = document.getElementById('text-next');
-
-        const timerDisplay = document.getElementById('timer');
-        const loopDisplay = document.getElementById('loop-count');
-        const stepDisplay = document.getElementById('step-count');
-        const btnPlay = document.getElementById('btn-play');
-
-        function updateDisplay() {
-            // 1. Xử lý ô HIỆN TẠI (Tràn màu nền cực mạnh)
-            const currentVal = sequenceData[currentIndex];
-            textCurr.textContent = currentVal;
-            if (currentVal === "Lớn") {
-                blockCurr.className = "result-strip strip-curr curr-bg-lon";
-            } else {
-                blockCurr.className = "result-strip strip-curr curr-bg-nho";
-            }
-
-            // 2. Xử lý ô TRƯỚC ĐÓ (Nền xám cố định)
-            let prevVal = null;
-            if (currentIndex > 0) {
-                prevVal = sequenceData[currentIndex - 1];
-            } else if (currentIndex === 0 && loopCounter > 1) {
-                prevVal = sequenceData[sequenceData.length - 1]; 
-            }
-            
-            if (prevVal) {
-                textPrev.textContent = prevVal;
-                blockPrev.className = "result-strip strip-prev";
-            } else {
-                textPrev.textContent = "Chờ...";
-                blockPrev.className = "result-strip strip-cho-all";
-            }
-
-            // 3. Xử lý ô TIẾP THEO (Nền tím cố định)
-            let nextVal = null;
-            if (currentIndex < sequenceData.length - 1) {
-                nextVal = sequenceData[currentIndex + 1];
-            } else if (currentIndex === sequenceData.length - 1) {
-                nextVal = sequenceData[0]; 
-            }
-            
-            textNext.textContent = nextVal;
-            blockNext.className = "result-strip strip-next";
-
-            // 4. Đồng bộ thông số
-            loopDisplay.textContent = loopCounter;
-            stepDisplay.textContent = `${currentIndex + 1}/${sequenceData.length}`;
+        function setTransform() {
+            container.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
         }
 
-        function nextStep() {
-            currentIndex++;
-            if (currentIndex >= sequenceData.length) {
-                currentIndex = 0;
-                loopCounter++;
-            }
-            updateDisplay();
-        }
+        function drawLines() {
+            const oldLines = svgCanvas.querySelectorAll('line');
+            oldLines.forEach(l => l.remove());
 
-        function toggleSystem() {
-            if (!isPlaying) {
-                isPlaying = true;
-                btnPlay.textContent = "TẠM DỪNG CHUỖI";
-                btnPlay.classList.add('playing');
-                updateDisplay();
+            const containerRect = container.getBoundingClientRect();
 
-                intervalId = setInterval(() => {
-                    timeLeft--;
-                    timerDisplay.textContent = timeLeft;
+            function traverse(li) {
+                if (li.classList.contains('collapsed')) return;
+                
+                const parentWrapper = li.querySelector(':scope > .node-wrapper');
+                if (!parentWrapper) return;
 
-                    if (timeLeft <= 0) {
-                        nextStep();
-                        timeLeft = 30; 
+                const directUl = Array.from(li.children).find(child => child.tagName === 'UL');
+                if (!directUl) return;
+
+                const childLis = Array.from(directUl.children).filter(child => child.tagName === 'LI');
+                
+                childLis.forEach(childLi => {
+                    const childWrapper = childLi.querySelector(':scope > .node-wrapper');
+                    if (childWrapper) {
+                        const parentBox = parentWrapper.querySelector('.node-box');
+                        const childBox = childWrapper.querySelector('.node-box');
+                        
+                        const r1 = parentBox.getBoundingClientRect();
+                        const r2 = childBox.getBoundingClientRect();
+
+                        const x1 = (r1.left + r1.width / 2 - containerRect.left) / scale;
+                        const y1 = (r1.bottom - containerRect.top) / scale;
+                        const x2 = (r2.left + r2.width / 2 - containerRect.left) / scale;
+                        const y2 = (r2.top - containerRect.top) / scale;
+
+                        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                        line.setAttribute('x1', x1);
+                        line.setAttribute('y1', y1);
+                        line.setAttribute('x2', x2);
+                        line.setAttribute('y2', y2);
+                        line.setAttribute('stroke', '#2980b9');
+                        line.setAttribute('stroke-width', '2');
+                        line.setAttribute('marker-end', 'url(#arrow)');
+                        svgCanvas.appendChild(line);
+
+                        traverse(childLi);
                     }
-                }, 1000);
-            } else {
-                isPlaying = false;
-                btnPlay.textContent = "TIẾP TỤC CHUỖI";
-                btnPlay.classList.remove('playing');
-                clearInterval(intervalId);
+                });
             }
+
+            const rootLi = document.querySelector('#main-tree > ul > li');
+            if (rootLi) traverse(rootLi);
         }
+
+        // Hỗ trợ chạm trên điện thoại để bật/tắt menu nút bấm bên cạnh
+        document.addEventListener('click', function(e) {
+            const wrapper = e.target.closest('.node-wrapper');
+            document.querySelectorAll('.node-wrapper').forEach(w => {
+                if (w !== wrapper) w.classList.remove('active');
+            });
+            if (wrapper && !e.target.closest('button') && !e.target.closest('.node-title')) {
+                wrapper.classList.toggle('active');
+            }
+        });
+
+        // Xử lý kéo thả chuột và cảm ứng
+        viewport.onmousedown = (e) => {
+            if (e.target.closest('.node-wrapper') || e.target.closest('#controls')) return;
+            isDragging = true;
+            startX = e.clientX - pointX;
+            startY = e.clientY - pointY;
+        };
+
+        window.onmousemove = (e) => {
+            if (!isDragging) return;
+            pointX = e.clientX - startX;
+            pointY = e.clientY - startY;
+            setTransform();
+        };
+
+        window.onmouseup = () => { isDragging = false; };
+
+        viewport.onwheel = (e) => {
+            e.preventDefault();
+            scale = e.deltaY < 0 ? scale + 0.1 : Math.max(0.1, scale - 0.1);
+            setTransform();
+            setTimeout(drawLines, 30);
+        };
+
+        viewport.ontouchstart = (e) => {
+            if (e.target.closest('.node-wrapper') || e.target.closest('#controls')) return;
+            if (e.touches.length === 1) {
+                isDragging = true;
+                startX = e.touches[0].clientX - pointX;
+                startY = e.touches[0].clientY - pointY;
+            } else if (e.touches.length === 2) {
+                isDragging = false;
+                initialDistance = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+            }
+        };
+
+        viewport.ontouchmove = (e) => {
+            if (e.touches.length === 1 && isDragging) {
+                pointX = e.touches[0].clientX - startX;
+                pointY = e.touches[0].clientY - startY;
+                setTransform();
+            } else if (e.touches.length === 2 && initialDistance) {
+                const currentDistance = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                scale = Math.max(0.1, Math.min(scale * (currentDistance / initialDistance), 5));
+                initialDistance = currentDistance;
+                setTransform();
+                setTimeout(drawLines, 30);
+            }
+        };
+
+        viewport.ontouchend = (e) => {
+            if (e.touches.length < 2) initialDistance = null;
+            if (e.touches.length === 0) isDragging = false;
+        };
+
+        function zoomIn() { scale += 0.1; setTransform(); setTimeout(drawLines, 30); }
+        function zoomOut() { scale = Math.max(0.1, scale - 0.1); setTransform(); setTimeout(drawLines, 30); }
+        function resetZoom() { scale = 1; pointX = 0; pointY = 0; setTransform(); setTimeout(drawLines, 30); }
+
+        function toggleNode(btn) {
+            const li = btn.closest('li');
+            li.classList.toggle('collapsed');
+            btn.innerText = li.classList.contains('collapsed') ? 'Hiện' : 'Ẩn';
+            setTimeout(drawLines, 30);
+        }
+
+        function deleteNode(btn) {
+            const li = btn.closest('li');
+            li.remove();
+            setTimeout(drawLines, 30);
+        }
+
+        function addChildNode(btn) {
+            let nodeName = prompt("Nhập nội dung cho nhánh mới:", "Nhánh mới");
+            if (nodeName === null) return;
+            if (nodeName.trim() === "") nodeName = "Không tên";
+
+            const li = btn.closest('li');
+            let ulChild = li.querySelector(':scope > ul');
+            
+            if (!ulChild) {
+                ulChild = document.createElement('ul');
+                li.appendChild(ulChild);
+            }
+
+            const newLi = document.createElement('li');
+            newLi.innerHTML = `
+                <div class="node-wrapper">
+                    <div class="node-box">
+                        <span class="node-title" contenteditable="true">${nodeName}</span>
+                    </div>
+                    <div class="node-actions">
+                        <button class="toggle-btn" onclick="toggleNode(this)">Ẩn</button>
+                        <button class="add-btn" onclick="addChildNode(this)">➕ Thêm</button>
+                        <button onclick="deleteNode(this)">🗑 Xóa</button>
+                    </div>
+                </div>
+            `;
+            ulChild.appendChild(newLi);
+            setTimeout(drawLines, 30);
+        }
+
+        function addRootNode() {
+            let rootName = prompt("Nhập nội dung cho Gốc chính mới:", "Gốc phụ");
+            if (rootName === null) return;
+            if (rootName.trim() === "") rootName = "Gốc mới";
+
+            const mainUl = document.querySelector('#main-tree > ul');
+            const newLi = document.createElement('li');
+            newLi.innerHTML = `
+                <div class="node-wrapper">
+                    <div class="node-box">
+                        <span class="node-title" contenteditable="true">${rootName}</span>
+                    </div>
+                    <div class="node-actions">
+                        <button class="toggle-btn" onclick="toggleNode(this)">Ẩn</button>
+                        <button class="add-btn" onclick="addChildNode(this)">➕ Thêm</button>
+                        <button onclick="deleteNode(this)">🗑 Xóa</button>
+                    </div>
+                </div>
+            `;
+            mainUl.appendChild(newLi);
+            setTimeout(drawLines, 30);
+        }
+
+        window.onload = () => drawLines();
+        window.onresize = () => setTimeout(drawLines, 100);
     </script>
 </body>
-</html>
+    </html>
+    
